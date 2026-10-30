@@ -19,25 +19,8 @@ function random() {
   randomSeed = (1664525 * randomSeed + 1013904223) >>> 0;
   return randomSeed / 4294967296;
 }
-const gradient = new T.DataTexture(new Uint8Array([86, 166, 224, 255]), 4, 1, T.RedFormat);
-gradient.minFilter = gradient.magFilter = T.NearestFilter;
-gradient.needsUpdate = true;
-const grainBytes = new Uint8Array(64 * 64 * 4);
-for (let i = 0; i < 64 * 64; i++) {
-  // Fine fibres, low contrast enough to disappear from the overview.
-  const v = 242 + ((i * 37 ^ (i >> 3) * 19) % 14);
-  grainBytes.set([v, v, v, 255], i * 4);
-}
-const grain = new T.DataTexture(grainBytes, 64, 64, T.RGBAFormat);
-grain.wrapS = grain.wrapT = T.RepeatWrapping;
-grain.repeat.set(3, 3);
-grain.needsUpdate = true;
-const materials = new Map();
-function paper(color) {
-  if (!materials.has(color)) materials.set(color, new T.MeshToonMaterial({ color, gradientMap: gradient, map: grain }));
-  return materials.get(color);
-}
-const ink = new T.LineBasicMaterial({color: 0x534d48, transparent: true, opacity: .27});
+import { paper, ink, outline, smooth } from './paper-style.js';
+import { createStationRig } from './station-model.js';
 function add(parent, geometry, color, x = 0, y = 0, z = 0) {
   const m = new T.Mesh(geometry, paper(color));
   m.position.set(x, y, z);
@@ -290,49 +273,26 @@ function label(p,text,x,y,z,w,h,bg='#3c5c58',fg='#f2dfb5') {
   }
   const m=new T.Mesh(new T.PlaneGeometry(w,h),labelCache.get(key));m.position.set(x,y,z);p.add(m);return m;
 }
-function station(p,autumn) {
-  const g=group(p,-4.05,1.41,1.30);
+function station(p,autumn,template) {
+  const rig=createStationRig(template);
+  rig.position.set(-4.05,1.41,1.30);p.add(rig);
   contact(p,-4.05,1.41,1.3,3.7,1.7);
-  edges(box(g,0xe1c38e,0,.61,0,2.65,1.22,.94));
-  box(g,0xb8a486,0,.09,0,2.75,.18,1.03);
-  const roofGroup=group(g); roofGroup.rotation.y=Math.PI/2;
-  roof(roofGroup,1.28,2.93,1.23,0x456e70);
-  const gable=new T.Shape();gable.moveTo(-.47,0);gable.lineTo(0,.32);gable.lineTo(.47,0);gable.closePath();
-  const gableMesh=add(roofGroup,new T.ExtrudeGeometry(gable,{depth:2.65,bevelEnabled:false}),0xe1c38e,0,1.22,-1.325);
-  for(const x of[-1.16,1.16])box(g,0x8d7754,x,.65,.492,.045,1.12,.035);
-  box(g,0x8d7754,0,1.09,.495,2.65,.055,.04);
-  for(const x of[-.98,-.58,.58,.98])windowFrame(g,x,.71,.488,.24,.43);
-  box(g,0x6b5b46,0,.36,.5,.44,.72,.05);
-  for(const x of[-.12,.12])windowFrame(g,x,.43,.54,.13,.35);
-  // Center gable, clock, fascia and station-name board.
-  const tri=new T.Shape();tri.moveTo(-.50,0);tri.lineTo(0,.56);tri.lineTo(.50,0);tri.closePath();
-  edges(add(g,new T.ExtrudeGeometry(tri,{depth:.08,bevelEnabled:false}),0xe9d5ac,0,1.21,.51));
-  beam(g,[-.55,1.2,.62],[0,1.82,.62],.055,0x406467);beam(g,[0,1.82,.62],[.55,1.2,.62],.055,0x406467);
-  const clock=cylinder(g,0x665e4b,0,1.44,.63,.145,.045,24);clock.rotation.x=Math.PI/2;
-  const dial=cylinder(g,0xf6e5b9,0,1.44,.659,.117,.008,24);dial.rotation.x=Math.PI/2;
-  box(g,0x635b4c,0,1.48,.668,.012,.08,.008);box(g,0x635b4c,.035,1.44,.668,.07,.012,.008);
-  // The platform canopy is on the railway side of the building.
-  const canopy=box(g,0x4c7170,0,.88,-.83,2.95,.075,.82);canopy.rotation.x=.08;edges(canopy);
-  for(const x of[-1.3,-.65,.65,1.3]) {
-    box(g,0x8d7450,x,.41,-1.12,.055,.82,.055);
-    beam(g,[x,.53,-1.12],[x,.84,-.89],.035,0x8d7450);
-  }
-  box(g,0xc7b38e,0,-.035,-.15,3.15,.10,2.08);
-  for(let i=0;i<24;i++)box(g,0xe9d8b6,-1.47+i*.128,.025,-1.18,.095,.016,.09);
-  label(g,'山 谷 车 站',0,1.02,.535,1.08,.22);
-  label(g,autumn?'旧 时 光 候 车 室':'VALLEY · 1986',0,.98,-1.25,1.05,.16);
-  // Luggage, a red postbox, stacked parcels and a waiting bench.
+  const facade=rig.getObjectByName('Hinge_Front');
+  label(facade,'山 谷 车 站',0,.99,.065,1.06,.20);
+  const back=rig.getObjectByName('Hinge_Back');
+  const sign=label(back,autumn?'旧 时 光 候 车 室':'VALLEY · 1986',0,1.02,-.05,1.05,.16);
+  sign.rotation.y=Math.PI;
   for(let i=0;i<3;i++) {
-    const x=-1.15+i*.22;
-    edges(box(g,[0x9f7350,0x6d8078,0xb89862][i],x,.11,.72,.19,.22,.14));
-    box(g,0x695949,x,.235,.72,.08,.025,.035);
+    const x=-1.1+i*.22;
+    edges(box(rig,[0x9f7350,0x6d8078,0xb89862][i],x,.16,.74,.19,.22,.14));
+    box(rig,0x695949,x,.285,.74,.08,.025,.035);
   }
-  box(g,0xa44f44,1.5,.30,.42,.25,.56,.22);box(g,0xdeb37e,1.5,.43,.538,.14,.035,.015);
-  roof(group(g,1.5,0,.42),.30,.29,.59,0x914d43);
-  label(g,'〒',1.5,.27,.54,.14,.12,'#a44f44');
-  for(const x of[-.9,-.4])box(g,0xba9764,x,.17,-.91,.33,.32,.25);
-  bench(g,.61,.025,-.94);
-  return g;
+  box(rig,0xa44f44,1.49,.35,.43,.25,.56,.22);
+  label(rig,'〒',1.49,.33,.551,.14,.12,'#a44f44');
+  bench(rig,.65,.08,-.94);
+  rig.userData.anchorY=rig.position.y;
+  p.userData.station=rig;
+  return rig;
 }
 function bench(p,x,y,z) {
   const g=group(p,x,y,z);
@@ -346,7 +306,7 @@ function bench(p,x,y,z) {
   return g;
 }
 function tree(p,x,y,z,scale,autumn,trees,hero=false,cherry=false) {
-  const g=group(p,x,y,z);g.scale.setScalar(scale);g.userData.dynamic=true;
+  const g=group(p,x,y,z);g.scale.setScalar(scale);g.userData.dynamic=true;g.userData.restScale=scale;
   cylinder(g,0x887354,0,.48,0,.10,.96,7,.055);
   const colors=autumn?[0xd1984b,0xe1b967,0xb98045]:cherry?[0xe5b2a8,0xf2cabe,0xd29a95]:[0x91a772,0xb3bd80,0x728c64];
   // Crossed, scalloped cardstock leaves have thickness and a printed central fold.
@@ -512,13 +472,13 @@ function batchStatic(root) {
   }
 }
 
-export function createDiorama({parent,autumn,trees,wheels,trains,leaves,clickable,smoke}) {
+export function createDiorama({parent,autumn,trees,wheels,trains,leaves,clickable,smoke,stationTemplate}) {
   randomSeed=1986;
   const world=group(parent,0,.39,0);
   land(world,autumn);water(world,autumn,leaves);mountains(world);
   railwayModel(world);bridge(world,.62);bridge(world,-3.63,true);
   polygon(world,[[-5.7,.2],[-2.4,.2],[-2.4,1.7],[-3,2.23],[-5.7,2.23]],.64,.73,0xb9ac8e,true);
-  station(world,autumn);
+  station(world,autumn,stationTemplate);
   house(world,4.7,1.15,.15,1.04,0xe3cba0);
   house(world,5.9,1.15,-1.15,.77,0xd9c49d);
   house(world,3.4,1.84,-2.8,.72,0xe2d6b7);
@@ -561,6 +521,6 @@ export function createDiorama({parent,autumn,trees,wheels,trains,leaves,clickabl
   }
   trainModel(world,autumn,trains,smoke);
   batchStatic(world);
-  world.userData.version='0.2.0';
+  world.userData.version='0.3.0';
   return world;
 }

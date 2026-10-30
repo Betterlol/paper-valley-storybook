@@ -1,4 +1,8 @@
 import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {loadStationTemplate,foldStation} from '../dist/station-model.js';
+import {prepareFolding,setWorldFold,liftWorldPage} from '../dist/folding.js';
+import {createBook,createTurningPage,pageHeight} from '../dist/book-body.js';
 import * as T from '../dist/three.module.js';
 import {createDiorama, railway, riverCenter, riverHalfWidth} from '../dist/diorama.js';
 
@@ -7,9 +11,10 @@ import {createDiorama, railway, riverCenter, riverHalfWidth} from '../dist/diora
 globalThis.document = {
   createElement: () => ({getContext: () => ({fillRect(){}, strokeRect(){}, fillText(){}})}),
 };
+const stationTemplate=await loadStationTemplate(await readFile(new URL('../dist/assets/station.glb',import.meta.url)));
 const scene = new T.Scene();
 const lists = {trees:[], wheels:[], trains:[], leaves:[], clickable:[], smoke:[]};
-const worlds = [false, true].map(autumn => createDiorama({parent:scene, autumn, ...lists}));
+const worlds = [false, true].map(autumn => createDiorama({parent:scene, autumn, stationTemplate, ...lists}));
 scene.updateMatrixWorld(true);
 let meshes = 0, vertices = 0;
 scene.traverse(object => {
@@ -42,5 +47,41 @@ for(let i=0;i<50;i++) {
   const z=-4.5+i*9/49;
   assert(Math.abs(riverCenter(z))+riverHalfWidth(z)<1.5, 'River fits between the banks');
 }
+// Check true articulation and page ownership, not a whole-world squash.
+const station=worlds[0].userData.station;
+const openSize=new T.Box3().setFromObject(station).getSize(new T.Vector3());
+foldStation(station,1);scene.updateMatrixWorld(true);
+const closedBounds=new T.Box3();
+station.traverse(m=>{if(m.isMesh){const p=m.geometry.attributes.position,v=new T.Vector3();for(let i=0;i<p.count;i++)closedBounds.expandByPoint(v.fromBufferAttribute(p,i).applyMatrix4(m.matrixWorld))}});
+const closedSize=closedBounds.getSize(new T.Vector3());
+assert(closedBounds.min.y>=station.getWorldPosition(new T.Vector3()).y-.011,'The folded station stays above its mounting platform');
+assert(closedSize.y<openSize.y*.6,'Hinged station folds to a substantially lower profile');
+foldStation(station,0);
+for(const world of worlds)prepareFolding(world,lists.trees,lists.trains,lists.smoke,lists.leaves);
+for(const amount of[0,.2,.5,.8,1,0]) {
+  setWorldFold(worlds[0],amount,0,true);liftWorldPage(worlds[0],-1,amount*Math.PI);
+  scene.updateMatrixWorld(true);
+  scene.traverse(o=>{for(const value of o.matrixWorld.elements)assert(Number.isFinite(value),'Fold transforms remain finite')});
+}
+assert(Math.abs(station.scale.y-1)<1e-8,'Station folds on hinges without vertical scaling');
+assert.equal(station.parent.name,'LeftPageCarrier','Station rides its paper leaf');
+assert.equal(station.getObjectByName('Hinge_RoofFront').parent.name,'Hinge_Front','Roof is attached to its wall hinge');
+assert.equal(station.userData.hinges.length,15);
+const book=createBook(scene),turning=createTurningPage(book);
+const topSheets=book.children.filter(m=>m.isMesh&&m.material.color?.getHex()===0xf1e4c5);
+assert.equal(topSheets.length,2);
+assert(topSheets.every(m=>m.geometry.attributes.normal.getY(20)>.5),'Page top faces point upwards');
+assert(pageHeight(4)>pageHeight(.1),'The bound pages have a recessed gutter');
+for(const t of[0,.25,.5,.75,1]) {
+  turning.update(t,-1);
+  const a=turning.geometry.attributes.position.array;
+  for(const value of a)assert(Number.isFinite(value),'Curved leaf remains finite');
+  // Each cross section is integrated at equal arc length and cannot stretch.
+  for(let i=1;i<turning.samples.length;i++) {
+    const a=turning.samples[i-1],b=turning.samples[i];
+    assert(Math.abs(Math.hypot(b[0]-a[0],b[1]-a[1])-7.30/64)<1e-5,'Page curl preserves paper length');
+  }
+}
+console.log('Articulation:',JSON.stringify({openHeight:openSize.y,closedHeight:closedSize.y,hinges:station.userData.hinges.length}));
 console.log(JSON.stringify({passed:true, worlds:worlds.length, meshes, vertices, trees:lists.trees.length,
   checks:['finite geometry','scenery bounds','retained animation and click targets','railway continuity','bridge alignment','river bounds']}));
