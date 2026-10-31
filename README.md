@@ -75,3 +75,13 @@ python scripts/verify-station-export.py
 ```
 
 Real WebGL browser inspection was performed locally at 1536×1024 and 390×844, including station close-up, spring/autumn views, watering, reading and a forward/backward turn. Fold/turn stills used controlled animation timestamps to inspect intermediate poses. This establishes a reviewed implementation baseline; the concept art's density, material richness and a fully articulated landscape remain future work. See `docs/visual-baseline-2026-10-31.md` for evidence and remaining limits.
+
+## v0.4.1 — wider pages and a clear railway corridor
+
+The paper leaves are about 18% wider, with matching covers, curled leaf geometry, terrain and framing. The right-hand houses sit outside the railway loop. Rear terrain is split into an inner village terrace and an outer forest ridge, leaving a lower continuous rail corridor. The station approach, platform, bench, waiting passenger and nearby trees have been repositioned to clear the carriages.
+
+```sh
+node scripts/verify-rail-clearance.mjs
+```
+
+This new check verifies that the complete locomotive/carriage geometry fits its clearance envelope, then sweeps that rotated envelope at 1,200 positions per season against actual static scenery triangles, including terrain, buildings and vegetation. The scene, folding and story checks above also remain required. Local WebGL review covered a complete lap using controlled animation steps, the right bend and rear corridor, both seasonal pages, forward/backward turns and portrait framing. See `docs/railway-clearance-2026-10-31.md`.

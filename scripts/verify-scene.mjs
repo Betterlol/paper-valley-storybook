@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {loadStationTemplate,foldStation} from '../dist/station-model.js';
 import {prepareFolding,setWorldFold,liftWorldPage} from '../dist/folding.js';
-import {createBook,createTurningPage,pageHeight} from '../dist/book-body.js';
+import {createBook,createTurningPage,pageHeight,BOOK_LEAF_WIDTH} from '../dist/book-body.js';
 import * as T from '../dist/three.module.js';
 import {createDiorama, railway, riverCenter, riverHalfWidth} from '../dist/diorama.js';
 
@@ -49,7 +49,7 @@ for (let i=0; i<500; i++) {
   const p=railway.getPointAt(i/500), t=railway.getTangentAt(i/500);
   assert(Math.abs(p.y-1.66) < 1e-6, 'Train follows a level track');
   assert(Math.abs(t.length()-1) < 1e-6, 'Track orientation is well defined');
-  assert(Math.abs(p.x)<6 && p.z>=-4.1 && p.z<1, 'Track fits inside book');
+  assert(Math.abs(p.x)<7 && p.z>=-4.1 && p.z<1, 'Track fits inside book');
   if (Math.abs(p.x) < 1.7) {
     assert(Math.abs(p.z-.62)<.15 || Math.abs(p.z+3.63)<.15, 'River crossings align with bridge decks');
   }
@@ -90,7 +90,7 @@ for(const t of[0,.25,.5,.75,1]) {
   // Each cross section is integrated at equal arc length and cannot stretch.
   for(let i=1;i<turning.samples.length;i++) {
     const a=turning.samples[i-1],b=turning.samples[i];
-    assert(Math.abs(Math.hypot(b[0]-a[0],b[1]-a[1])-7.30/64)<1e-5,'Page curl preserves paper length');
+    assert(Math.abs(Math.hypot(b[0]-a[0],b[1]-a[1])-BOOK_LEAF_WIDTH/64)<1e-5,'Page curl preserves paper length');
   }
 }
 console.log('Articulation:',JSON.stringify({openHeight:openSize.y,closedHeight:closedSize.y,hinges:station.userData.hinges.length}));

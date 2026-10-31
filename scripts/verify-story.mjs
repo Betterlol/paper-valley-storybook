@@ -54,7 +54,7 @@ assert(!document.querySelector('#water').disabled,'controls restored after turn'
 for(const [width,height] of [[390,844],[320,1200]]) {
   globalThis.innerWidth=width;globalThis.innerHeight=height;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();reset();cameraUpdate();camera.updateMatrixWorld(true);
   assert(scene.fog.near>camera.position.distanceTo(orbit.target)+5,'Adaptive fog keeps the portrait book visible');
-  for(const x of [-7.56,7.56])for(const z of [-5.32,5.32]) {
+  for(const x of [-8.86,8.86])for(const z of [-5.32,5.32]) {
     const corner=new T.Vector3(x,-.3,z);book.localToWorld(corner);corner.project(camera);
     assert(Math.abs(corner.x)<.98,'The complete book fits a portrait phone viewport: corner '+[x,z]+' projects to '+corner.x);
     assert(corner.z>-1&&corner.z<1,'Distant portrait framing stays inside the camera clipping planes');

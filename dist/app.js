@@ -39,9 +39,9 @@ worlds[1].visible = false;
 
 const turningPage=createTurningPage(book);
 const birdRoot=group(book);for(let i=0;i<7;i++){let g=group(birdRoot);for(let s of[-1,1]){let wing=box(g,0xf0dec0,s*.10,0,0,.23,.018,.07);wing.rotation.z=s*.35}birds.push(g)}
-const ray=new T.Raycaster(),pointer=new T.Vector2();let orbit={yaw:.19,pitch:.62,distance:24.5,target:new T.Vector3(1.5,.9,-.15)},down=null,drag=false;const isMobile=()=>innerWidth<700;
+const ray=new T.Raycaster(),pointer=new T.Vector2();let orbit={yaw:.19,pitch:.62,distance:26.8,target:new T.Vector3(1.5,.9,-.15)},down=null,drag=false;const isMobile=()=>innerWidth<700;
 function cameraUpdate() {
-  const framing=isMobile()?Math.max(1.3,1.2/camera.aspect):1;
+  const framing=isMobile()?Math.max(1.3,1.3/camera.aspect):1;
   const d=orbit.distance*framing,t=orbit.target;
   camera.position.set(t.x+Math.sin(orbit.yaw)*Math.cos(orbit.pitch)*d,t.y+Math.sin(orbit.pitch)*d,t.z+Math.cos(orbit.yaw)*Math.cos(orbit.pitch)*d);
   camera.lookAt(t);
@@ -65,7 +65,7 @@ function turn(to) {
   document.querySelector('#water').disabled=true;
   document.querySelector('#season').textContent='故事正在翻向下一页';
 }
-document.querySelector('#water').onclick=()=>page?readLetter():water();document.querySelector('#next').onclick=()=>turn(1);document.querySelector('#prev').onclick=()=>turn(0);document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')turn(1);if(e.key==='ArrowLeft')turn(0)});function reset(){orbit.yaw=.19;orbit.pitch=.62;orbit.distance=24.5;orbit.target.set(1.5,.9,-.15);document.querySelector('.intro').style.opacity='1';}document.querySelector('#reset').onclick=reset;document.querySelector('.mark').onclick=e=>{e.preventDefault();reset()};
+document.querySelector('#water').onclick=()=>page?readLetter():water();document.querySelector('#next').onclick=()=>turn(1);document.querySelector('#prev').onclick=()=>turn(0);document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')turn(1);if(e.key==='ArrowLeft')turn(0)});function reset(){orbit.yaw=.19;orbit.pitch=.62;orbit.distance=26.8;orbit.target.set(1.5,.9,-.15);document.querySelector('.intro').style.opacity='1';}document.querySelector('#reset').onclick=reset;document.querySelector('.mark').onclick=e=>{e.preventDefault();reset()};
 document.querySelector('#detail').onclick=()=>{
   if(flip)return;
   orbit.yaw=.14;orbit.pitch=.40;orbit.distance=10.5;orbit.target.set(-2.75,2.10,1.2);
@@ -125,4 +125,4 @@ smoke.forEach(({mesh,car,phase,autumn})=>{
 birds.forEach((g,i)=>{let a=time*.16+i*.85;g.position.set(Math.cos(a)*5,4.1+Math.sin(time+i)*.13,Math.sin(a)*2);g.rotation.y=-a;g.children.forEach((o,j)=>o.rotation.z=(j?1:-1)*(.25+Math.sin(time*4+i)*.35))});
 if(watering>0)watering-=dt;droplets.forEach((d,i)=>{d.visible=watering>0&&!page;if(d.visible)d.position.set(5.05+Math.sin(i*2.3)*.25,1.1+((time*1.2+i*.13)%1)*1.3,3.15+Math.cos(i*2.3)*.25)});renderer.render(scene,camera);requestAnimationFrame(frame)}
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});requestAnimationFrame(frame);setTimeout(()=>{document.querySelector('#loading').style.opacity=0;setTimeout(()=>document.querySelector('#loading').remove(),800)},500);
-window.storybook={getState:()=>({page,planted,delivered,turning:!!flip,version:'0.4.0'}),turn,water,readLetter};
+window.storybook={getState:()=>({page,planted,delivered,turning:!!flip,version:'0.4.1'}),turn,water,readLetter};

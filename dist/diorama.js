@@ -6,11 +6,12 @@ export const riverCenter = z => Math.sin(z * .72) * .28 - .08;
 export const riverHalfWidth = z => .82 + .17 * Math.cos(z * .9);
 const RAIL_HEIGHT = 1.66;
 const track = new T.CatmullRomCurve3([
-  [-5.35, RAIL_HEIGHT, -.15], [-3.8, RAIL_HEIGHT, .62],
-  [0, RAIL_HEIGHT, .62], [3.7, RAIL_HEIGHT, .54],
-  [5.45, RAIL_HEIGHT, -.7], [5.38, RAIL_HEIGHT, -2.8],
+  [-6.45, RAIL_HEIGHT, -.8], [-6.55, RAIL_HEIGHT, -.10],
+  [-6.35, RAIL_HEIGHT, .50], [-6.2, RAIL_HEIGHT, .62],
+  [-5.9, RAIL_HEIGHT, .62], [-5.6, RAIL_HEIGHT, .62], [-4.2, RAIL_HEIGHT, .62], [-3.0, RAIL_HEIGHT, .62], [0, RAIL_HEIGHT, .62], [3.7, RAIL_HEIGHT, .62],
+  [6.25, RAIL_HEIGHT, -.7], [6.18, RAIL_HEIGHT, -2.8],
   [3.3, RAIL_HEIGHT, -3.63], [0, RAIL_HEIGHT, -3.63],
-  [-3.8, RAIL_HEIGHT, -3.55], [-5.55, RAIL_HEIGHT, -2.35],
+  [-3.8, RAIL_HEIGHT, -3.63], [-6.45, RAIL_HEIGHT, -2.6],
 ].map(p => new T.Vector3(...p)), true, 'centripetal');
 export const railway = track;
 
@@ -83,7 +84,7 @@ function bankContour(side, inset, front = 4.35, back = -4.38) {
   }
   for (let i = 0; i <= 12; i++) {
     const z = back + (front - back) * i / 12;
-    points.push([side * (6.89 + .09 * Math.sin(i * 2.7)), z]);
+    points.push([side * (8.19 + .09 * Math.sin(i * 2.7)), z]);
   }
   return points;
 }
@@ -95,14 +96,19 @@ function land(p, autumn) {
         [0xbaac8e, 0xd2c2a0, 0xb6a88a, 0xd3c5a4, grass][i], i === 4);
     }
     const mid = side < 0
-      ? [[-2.08,1.65],[-2.35,.6],[-2.15,-.35],[-1.7,-1.25],[-2.05,-2.1],[-1.85,-3.9],[-4.8,-4.1],[-6.72,-4.02],[-6.75,.65],[-6.3,1.55],[-5.8,1.85],[-4.3,1.7]]
-      : [[1.65,1.25],[2.1,.25],[1.85,-.65],[1.7,-1.5],[2.1,-2.4],[1.65,-3.9],[4.4,-4.15],[6.75,-4.02],[6.8,.7],[6.3,1.4],[5.6,1.75],[3.9,1.5]];
+      ? [[-2.08,1.65],[-2.35,.6],[-2.15,-.35],[-1.7,-1.25],[-2.05,-2.1],[-1.85,-3.9],[-4.8,-4.1],[-8.02,-4.02],[-8.05,.65],[-7.6,1.55],[-5.8,1.85],[-4.3,1.7]]
+      : [[1.65,1.25],[2.1,.25],[1.85,-.65],[1.7,-1.5],[2.1,-2.4],[1.65,-3.9],[4.4,-4.15],[8.05,-4.02],[8.1,.7],[7.6,1.4],[6.5,1.75],[3.9,1.5]];
     polygon(p, mid, .64, side < 0 ? .71 : .45, 0xb6aa8c);
     polygon(p, mid, side < 0 ? 1.35 : 1.09, .055, grass, true);
     // Two rear ledges establish height without identical rectangular terraces.
-    const rear = [[side*2.3,-2.5],[side*3.2,-2.25],[side*4.4,-2.6],[side*6.75,-2.2],[side*6.8,-4.24],[side*2.15,-4.26]];
-    polygon(p, rear, 1.4, .38, 0xb4aa91);
+    const rear = [[side*2.3,-2.3],[side*3.2,-2.1],[side*4.4,-2.3],[side*5.05,-2.0],[side*4.9,-3.10],[side*2.15,-3.10]];
+    const rearBase=side<0?1.4:1.14;
+    polygon(p, rear, rearBase, 1.78-rearBase, 0xb4aa91);
     polygon(p, rear, 1.78, .06, autumn ? 0x9a956b : 0x91a17a, true);
+    // The rear railway runs between two separate terraces, never through a solid ledge.
+    const ridge=[[side*2.05,-4.05],[side*8.05,-4.05],[side*8.1,-4.45],[side*2.05,-4.45]];
+    polygon(p,ridge,.64,1.14,0xb4aa91);
+    polygon(p,ridge,1.78,.06,autumn?0x9a956b:0x91a17a,true);
     // Thin strata and angular facets on the exposed cliff faces.
     for (let i = 0; i < 13; i++) {
       const z = -3.7 + i * .4;
@@ -267,8 +273,8 @@ function label(p,text,x,y,z,w,h,bg='#3c5c58',fg='#f2dfb5') {
 }
 function station(p,autumn,template) {
   const rig=createStationRig(template);
-  rig.position.set(-4.05,1.41,1.30);p.add(rig);
-  contact(p,-4.05,1.41,1.3,3.7,1.7);
+  rig.position.set(-4.05,1.41,1.45);p.add(rig);
+  contact(p,-4.05,1.41,1.45,3.7,1.7);
   const facade=rig.getObjectByName('Hinge_Front');
   label(facade,'山 谷 车 站',0,.99,.065,1.06,.20);
   const back=rig.getObjectByName('Hinge_Back');
@@ -281,7 +287,7 @@ function station(p,autumn,template) {
   }
   box(rig,0xa44f44,1.49,.35,.43,.25,.56,.22);
   label(rig,'〒',1.49,.33,.551,.14,.12,'#a44f44');
-  bench(rig,.65,.08,-.94);
+  bench(rig,.65,.08,.73);
   rig.userData.anchorY=rig.position.y;
   p.userData.station=rig;
   return rig;
@@ -377,7 +383,7 @@ function gardens(p,autumn) {
       stone.rotation.y=.13*Math.sin(i*1.7);
     }
   }
-  stairs(p,-5.8,2.20,.68,.67,1.42,7,-1);
+  stairs(p,-5.8,2.42,.68,.67,1.42,7,-1);
   stairs(p,3.4,2.1,.68,.67,1.15,5,-1);
   fence(p,[[-6.55,3.9],[-5.9,3.9],[-5.2,3.9],[-4.9,3.65]],.65);
   fence(p,[[2.1,1.4],[2.7,1.45],[3.1,1.5]],1.15);
@@ -479,31 +485,31 @@ export function createDiorama({parent,autumn,trees,wheels,trains,leaves,clickabl
   land(world,autumn);water(world,autumn,leaves);mountains(world);
   createValleyDetails(world,autumn,riverCenter,riverHalfWidth);
   railwayModel(world);bridge(world,.62);bridge(world,-3.63,true);
-  polygon(world,[[-5.7,.2],[-2.4,.2],[-2.4,1.7],[-3,2.23],[-5.7,2.23]],.64,.73,0xb9ac8e,true);
+  polygon(world,[[-5.7,.2],[-2.4,.2],[-2.4,1.9],[-3,2.45],[-5.7,2.45]],.64,.73,0xb9ac8e,true);
   station(world,autumn,stationTemplate);
-  house(world,4.7,1.15,.15,1.04,0xe3cba0);
-  house(world,5.9,1.15,-1.15,.77,0xd9c49d);
+  house(world,7.35,1.15,.55,1.04,0xe3cba0);
+  house(world,7.55,1.15,-1.3,.77,0xd9c49d);
   house(world,3.4,1.84,-2.8,.72,0xe2d6b7);
   house(world,-4.4,1.84,-2.7,.73,0xdac59c);
-  house(world,-6.05,1.84,-3.4,.68,0xd7c7a8);
+  house(world,-3.0,1.84,-2.6,.68,0xd7c7a8);
   house(world,6.15,.68,2.1,.66,0xd4c39a);
   watermill(world,wheels);
   for(let i=0;i<22;i++) {
-    const side=i%2?1:-1,x=side*(2.4+random()*4.3),z=-3.9+random()*1.25;
-    if(Math.abs(x)>5.9)continue;
-    pine(world,x,1.84,z,.65+random()*.45);
+    const side=i%2?1:-1,x=side*(2.4+random()*5.0),z=-4.40+random()*.04;
+    if(Math.abs(x)>7.4)continue;
+    pine(world,x,1.84,z,.65+random()*.30);
   }
   for(const [x,y,z,s,cherry] of [
     [-6.2,.67,3.0,.85,true],[-5.5,.67,3.1,.64,false],[-2.3,.67,2.3,.78,true],
-    [6.5,.67,3.25,.60,true],[6.3,1.15,.6,.73,false],[3.5,1.15,-.6,.64,false],
-    [-6.3,1.41,.0,.72,false],[2.2,1.15,-1.4,.7,true],[-2.7,1.41,-1.4,.57,false],
+    [6.5,.67,3.25,.60,true],[7.7,1.15,1.1,.73,false],[3.5,1.15,-.6,.64,false],
+    [-7.4,1.41,.0,.72,false],[2.2,1.15,-1.4,.7,true],[-2.7,1.41,-1.4,.57,false],
   ])tree(world,x,y,z,s,autumn,trees,false,cherry&&!autumn);
   const hero=tree(world,5.05,.68,3.15,autumn?1.22:.32,autumn,trees,true);
   hero.userData.hero=true;hero.userData.base=autumn?1.22:.32;
   hero.traverse(o=>{if(o.isMesh){o.userData.action=autumn?'letter':'water';clickable.push(o)}});
   bench(world,4.65,.69,4.03);lantern(world,3.83,.69,3.8);lantern(world,-5.6,1.43,1.3);lantern(world,3.6,1.15,1.15);
   gardens(world,autumn);
-  person(world,-4.7,1.47,.45);person(world,4.25,1.16,1.0);
+  person(world,-4.7,1.47,2.10);person(world,4.25,1.16,1.0);
   const personAtTree=person(world,autumn?4.65:4.4,autumn?.96:.68,autumn?4.03:3.5,autumn);
   personAtTree.scale.setScalar(1.2);
   personAtTree.userData.dynamic=true;
@@ -524,6 +530,6 @@ export function createDiorama({parent,autumn,trees,wheels,trains,leaves,clickabl
   }
   trainModel(world,autumn,trains,smoke);
   batchStatic(world);
-  world.userData.version='0.4.0';
+  world.userData.version='0.4.1';
   return world;
 }

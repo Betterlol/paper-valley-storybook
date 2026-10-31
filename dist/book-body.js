@@ -1,8 +1,10 @@
 import * as T from './three.module.js';
 import {paper,outline,smooth} from './paper-style.js';
 
+export const BOOK_LEAF_WIDTH=8.60;
+
 export function pageHeight(x) {
-  const u=Math.abs(x)/7.34;
+  const u=Math.abs(x)/(BOOK_LEAF_WIDTH+.04);
   return .25+.125*(1-Math.exp(-u*9))+.045*Math.sin(u*Math.PI);
 }
 function mesh(parent,geometry,color) {
@@ -41,25 +43,25 @@ function pageBlock(side,base,thickness,width,depth,color,bulge) {
 export function createBook(parent) {
   const root=new T.Group();root.position.x=1.3;root.name='BoundStorybook';parent.add(root);
   for(const side of[-1,1]) {
-    const cover=pageBlock(side,-.29,.17,7.56,10.63,0x67383f,.17);mesh(root,cover.geometry,cover.color);
-    const lining=pageBlock(side,-.10,.12,7.43,10.44,0xb89663,.55);mesh(root,lining.geometry,lining.color);
+    const cover=pageBlock(side,-.29,.17,BOOK_LEAF_WIDTH+.26,10.63,0x67383f,.17);mesh(root,cover.geometry,cover.color);
+    const lining=pageBlock(side,-.10,.12,BOOK_LEAF_WIDTH+.13,10.44,0xb89663,.55);mesh(root,lining.geometry,lining.color);
     for(let i=0;i<24;i++) {
-      const block=pageBlock(side,-.075+i*.0137,.0138,7.28+(i%3)*.016,10.14+(i%4)*.008,i%4?0xdfcdaa:0xc7b99d,1);
+      const block=pageBlock(side,-.075+i*.0137,.0138,BOOK_LEAF_WIDTH-.02+(i%3)*.016,10.14+(i%4)*.008,i%4?0xdfcdaa:0xc7b99d,1);
       mesh(root,block.geometry,block.color);
     }
-    const top=pageBlock(side,.25,.023,7.30,10.12,0xf1e4c5,1);mesh(root,top.geometry,top.color);
+    const top=pageBlock(side,.25,.023,BOOK_LEAF_WIDTH,10.12,0xf1e4c5,1);mesh(root,top.geometry,top.color);
     // Narrow printed frames follow the page curvature, not a flat overlay.
     for(const z of[-4.86,4.86]) {
-      const pts=[];for(let i=0;i<=40;i++){const x=side*(.28+i/40*6.72);pts.push([x,pageHeight(x)+.007,z])}
+      const pts=[];for(let i=0;i<=40;i++){const x=side*(.28+i/40*(BOOK_LEAF_WIDTH-.58));pts.push([x,pageHeight(x)+.007,z])}
       tube(root,pts,0xcab58b,.006);
     }
     for(const z of[-5.16,5.16]) {
-      tube(root,[[side*.13,-.285,z],[side*3.5,-.27,z],[side*7.32,-.282,z]],0xb08b55,.012);
+      tube(root,[[side*.13,-.285,z],[side*3.5,-.27,z],[side*(BOOK_LEAF_WIDTH+.02),-.282,z]],0xb08b55,.012);
     }
     // Brass corner caps and embossed binding tools.
     for(const z of[-5.15,5.15]) {
-      box(root,0xb79960,side*7.26,-.22,z,.5,.055,.13);
-      box(root,0xb79960,side*7.44,-.22,z-Math.sign(z)*.16,.11,.055,.42);
+      box(root,0xb79960,side*(BOOK_LEAF_WIDTH-.04),-.22,z,.5,.055,.13);
+      box(root,0xb79960,side*(BOOK_LEAF_WIDTH+.14),-.22,z-Math.sign(z)*.16,.11,.055,.42);
     }
   }
   const spine=mesh(root,new T.CylinderGeometry(.245,.245,10.65,20),0x59313b);
@@ -79,7 +81,7 @@ export function createBook(parent) {
 }
 
 export function createTurningPage(book) {
-  const columns=64,rows=8,w=7.30,d=10.12,positions=[],uv=[],indices=[];
+  const columns=64,rows=8,w=BOOK_LEAF_WIDTH,d=10.12,positions=[],uv=[],indices=[];
   const stride=columns+1,surface=(rows+1)*stride;
   for(let layer=0;layer<2;layer++)for(let row=0;row<=rows;row++)for(let i=0;i<=columns;i++) {
     positions.push(i/columns*w,0,(row/rows-.5)*d);uv.push(i/columns,row/rows);

@@ -45,9 +45,9 @@ export function createValleyDetails(parent,autumn,riverCenter,riverHalfWidth) {
   // A staggered retaining wall gives the station terrace a constructed edge.
   for(let row=0;row<4;row++)for(let i=0;i<12;i++) {
     const x=-5.64+i*.24+(row%2)*.10;
-    box(parent,masonry[(i+row)%4],x,.75+row*.17,2.235,.225,.153,.035);
+    box(parent,masonry[(i+row)%4],x,.75+row*.17,2.455,.225,.153,.035);
   }
-  for(let i=0;i<13;i++)box(parent,0xddceb0,-5.67+i*.24,1.39,2.23,.235,.06,.16);
+  for(let i=0;i<13;i++)box(parent,0xddceb0,-5.67+i*.24,1.39,2.45,.235,.06,.16);
   // Individual stones stay outside the open arch instead of filling its hole.
   for(const [z,small] of [[.62,false],[-3.63,true]]) {
     const half=small?1.7:1.83,radius=small?1.06:1.12;
