@@ -42,6 +42,14 @@ Regenerate the asset with Blender 4.5 or later:
 blender --background --python scripts/build-station.py
 ```
 
+Materials explicitly set the Principled BSDF base color as well as the viewport color, so Blender 5.x exports preserve the station palette. Shader nodes are located by type to support localized Blender installations. The updated exporter has been checked with Blender 5.2.2.
+
+To check a fresh export without overwriting project assets (requires Blender on PATH):
+
+```sh
+python scripts/verify-station-export.py
+```
+
 Run geometry, real GLB parsing, hinge, page curl and story loop checks:
 
 ```sh

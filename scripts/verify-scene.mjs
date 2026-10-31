@@ -12,6 +12,11 @@ globalThis.document = {
   createElement: () => ({getContext: () => ({fillRect(){}, strokeRect(){}, fillText(){}})}),
 };
 const stationTemplate=await loadStationTemplate(await readFile(new URL('../dist/assets/station.glb',import.meta.url)));
+const stationColors=new Map();
+stationTemplate.traverse(o=>{if(o.isMesh)stationColors.set(o.material.name,o.material.color.getHex())});
+for(const [name,color] of [['roof',0x537b7b],['timber',0x8a7350],['paper',0xe5cfa3]]) {
+  assert.equal(stationColors.get(name),color,`Exported ${name} color survives the real GLB loader`);
+}
 const scene = new T.Scene();
 const lists = {trees:[], wheels:[], trains:[], leaves:[], clickable:[], smoke:[]};
 const worlds = [false, true].map(autumn => createDiorama({parent:scene, autumn, stationTemplate, ...lists}));

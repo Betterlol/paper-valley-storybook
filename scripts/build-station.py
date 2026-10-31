@@ -8,7 +8,17 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete(use_global=False)
 def v(p): return Vector((p[0], -p[2], p[1]))
 def material(name, hexcolor):
-    m=bpy.data.materials.new(name); m.diffuse_color=tuple((lambda s:s/12.92 if s<.04045 else ((s+.055)/1.055)**2.4)(int(hexcolor[i:i+2],16)/255) for i in (0,2,4))+(1,);return m
+    m=bpy.data.materials.new(name)
+    m.diffuse_color=tuple((lambda s:s/12.92 if s<.04045 else ((s+.055)/1.055)**2.4)(int(hexcolor[i:i+2],16)/255) for i in (0,2,4))+(1,)
+    # glTF reads the shader, not the viewport color, in Blender 5.x.
+    # Blender 4.5 needs nodes enabled; 5.x creates them automatically.
+    if not m.node_tree:
+        m.use_nodes=True
+    shader=next(node for node in m.node_tree.nodes if node.type=='BSDF_PRINCIPLED')
+    shader.inputs['Base Color'].default_value=m.diffuse_color
+    shader.inputs['Metallic'].default_value=0
+    shader.inputs['Roughness'].default_value=.4
+    return m
 M={k:material(k,c) for k,c in {'paper':'E5CFA3','edge':'C8B38B','timber':'8A7350','roof':'537B7B','roof_edge':'375E65','glass':'EBD6A2','dark':'655C4D','gold':'C6A26A','ivory':'F1E2BD'}.items()}
 def parent(o,p):
     if p:
