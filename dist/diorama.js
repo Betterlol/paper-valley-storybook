@@ -21,6 +21,7 @@ function random() {
 }
 import { paper, ink, outline, smooth } from './paper-style.js';
 import { createStationRig } from './station-model.js';
+import {createMountainLayers,createValleyDetails} from './valley-details.js';
 function add(parent, geometry, color, x = 0, y = 0, z = 0) {
   const m = new T.Mesh(geometry, paper(color));
   m.position.set(x, y, z);
@@ -87,15 +88,15 @@ function bankContour(side, inset, front = 4.35, back = -4.38) {
   return points;
 }
 function land(p, autumn) {
-  const grass = autumn ? 0xa6a16e : 0x9cab78;
+  const grass = autumn ? 0xa69a62 : 0x91a46c;
   for (const side of [-1, 1]) {
     for (let i = 0; i < 5; i++) {
       polygon(p, bankContour(side, .10 + i * .055), .04 + i * .12, .125,
         [0xbaac8e, 0xd2c2a0, 0xb6a88a, 0xd3c5a4, grass][i], i === 4);
     }
     const mid = side < 0
-      ? [[-2.08,1.65],[-2.15,.3],[-1.7,-1.25],[-1.85,-3.9],[-6.72,-4.02],[-6.75,1.55],[-5.8,1.85],[-4.3,1.7]]
-      : [[1.65,1.25],[2.1,.25],[1.7,-1.5],[1.65,-3.9],[6.75,-4.02],[6.8,1.4],[5.6,1.75],[3.9,1.5]];
+      ? [[-2.08,1.65],[-2.35,.6],[-2.15,-.35],[-1.7,-1.25],[-2.05,-2.1],[-1.85,-3.9],[-4.8,-4.1],[-6.72,-4.02],[-6.75,.65],[-6.3,1.55],[-5.8,1.85],[-4.3,1.7]]
+      : [[1.65,1.25],[2.1,.25],[1.85,-.65],[1.7,-1.5],[2.1,-2.4],[1.65,-3.9],[4.4,-4.15],[6.75,-4.02],[6.8,.7],[6.3,1.4],[5.6,1.75],[3.9,1.5]];
     polygon(p, mid, .64, side < 0 ? .71 : .45, 0xb6aa8c);
     polygon(p, mid, side < 0 ? 1.35 : 1.09, .055, grass, true);
     // Two rear ledges establish height without identical rectangular terraces.
@@ -125,8 +126,11 @@ function water(p, autumn, flows) {
   geometry.setAttribute('position', new T.Float32BufferAttribute(positions,3));
   geometry.setAttribute('uv', new T.Float32BufferAttribute(uv,2));
   geometry.setIndex(indices); geometry.computeVertexNormals();
-  add(p,geometry,autumn?0x6e9da0:0x69a8af);
-  const ripples = new T.InstancedMesh(new T.BoxGeometry(.13,.006,.035), paper(0xffffff), 55);
+  add(p,geometry,autumn?0x679fa5:0x549ba8);
+  const rippleShape=new T.Shape();
+  rippleShape.moveTo(-.14,0);rippleShape.quadraticCurveTo(0,.045,.16,.008);rippleShape.lineTo(.12,.025);rippleShape.quadraticCurveTo(0,.065,-.14,.014);rippleShape.closePath();
+  const rippleGeometry=new T.ShapeGeometry(rippleShape,5);rippleGeometry.rotateX(-Math.PI/2);
+  const ripples = new T.InstancedMesh(rippleGeometry, paper(0xffffff), 55);
   ripples.userData.dynamic=true;
   ripples.userData.flows=[];
   ripples.instanceMatrix.setUsage(T.DynamicDrawUsage);
@@ -134,7 +138,7 @@ function water(p, autumn, flows) {
   ripples.frustumCulled=false;
   for (let i=0;i<55;i++) {
     ripples.userData.flows.push({z:random()*8.8-4.4,offset:(random()-.5)*1.3,speed:.10+random()*.17,width:.4+random()});
-    ripples.setColorAt(i,new T.Color(i%4?0xafd1c9:0xe9e6cb));
+    ripples.setColorAt(i,new T.Color(i%4?0x9dc6c8:0xdce5d1));
   }
   p.add(ripples);flows.push(ripples);updateRiver(ripples,0);
   // Shallows and small sand bars give the water an actual bank to meet.
@@ -156,19 +160,7 @@ export function updateRiver(surface,dt) {
   surface.instanceMatrix.needsUpdate=true;
 }
 function mountains(p) {
-  const shades=[0xa6b5ad,0x8faaa6,0x829b99];
-  for (let layer=0;layer<3;layer++) {
-    const points=[[-7,0]], count=13;
-    for(let i=0;i<=count;i++) {
-      const x=-7+i/count*14;
-      const h=1.4+(layer===0?1.0:.5)+random()*1.25;
-      points.push([x,h]);
-    }
-    points.push([7,0]);
-    const shape=new T.Shape(); points.forEach(([x,y],i)=>i?shape.lineTo(x,y):shape.moveTo(x,y));shape.closePath();
-    const m=add(p,new T.ExtrudeGeometry(shape,{depth:.055,bevelEnabled:false}),shades[layer],0,1.25,-4.42+layer*.27);
-    edges(m,50);
-  }
+  createMountainLayers(p);
 }
 function bridge(p, z, small = false) {
   const g=group(p,0,0,z), half=small?1.7:1.83, radius=small?1.06:1.12;
@@ -307,26 +299,35 @@ function bench(p,x,y,z) {
 }
 function tree(p,x,y,z,scale,autumn,trees,hero=false,cherry=false) {
   const g=group(p,x,y,z);g.scale.setScalar(scale);g.userData.dynamic=true;g.userData.restScale=scale;
-  cylinder(g,0x887354,0,.48,0,.10,.96,7,.055);
-  const colors=autumn?[0xd1984b,0xe1b967,0xb98045]:cherry?[0xe5b2a8,0xf2cabe,0xd29a95]:[0x91a772,0xb3bd80,0x728c64];
-  // Crossed, scalloped cardstock leaves have thickness and a printed central fold.
+  // Bent trunk and forked limbs give the paper canopy a recognisable silhouette.
+  const trunk=new T.Shape();trunk.moveTo(-.12,0);trunk.lineTo(-.06,.54);trunk.lineTo(-.13,.88);trunk.lineTo(-.03,1.28);trunk.lineTo(.08,1.28);trunk.lineTo(.025,.85);trunk.lineTo(.12,.46);trunk.lineTo(.15,0);trunk.closePath();
+  add(g,new T.ExtrudeGeometry(trunk,{depth:.085,bevelEnabled:false}),0x806342,0,0,-.04);
+  const colors=autumn?[0xcf873d,0xe2af4e,0xae6836,0xedc269]:cherry?[0xe6ada9,0xf2c7b8,0xc98791,0xf6d7c7]:[0x7d995d,0xa4b871,0x5d8057,0xc0ca8b];
   const leafShape=new T.Shape();
-  for(let j=0;j<18;j++) {
-    const a=j/18*Math.PI*2,r=j%2?.39:.46;
+  for(let j=0;j<64;j++) {
+    const a=j/64*Math.PI*2,r=.41+.036*Math.cos(a*9)+.025*Math.sin(a*5);
     const xx=Math.cos(a)*r,yy=Math.sin(a)*r;
     j?leafShape.lineTo(xx,yy):leafShape.moveTo(xx,yy);
   }
   leafShape.closePath();
-  const foliage=new T.ExtrudeGeometry(leafShape,{depth:.025,bevelEnabled:false});
-  for(let i=0;i<(hero?12:7);i++) {
-    const a=i*2.39996,spread=hero?.65:.43;
-    const xx=Math.cos(a)*spread,zz=Math.sin(a)*spread,yy=.96+(i%3)*.28;
-    beam(g,[0,.5,0],[xx,yy,zz],.045,0x887354);
-    const plate=add(g,foliage,colors[i%3],xx,yy+.18,zz);
-    plate.rotation.set(.08*Math.sin(i),a*.7,.12*Math.sin(i*2));plate.scale.set(1.12,.90,1);
-    box(plate,colors[(i+1)%3],0,0,.032,.013,.65,.008);
+  const foliage=new T.ExtrudeGeometry(leafShape,{depth:.025,bevelEnabled:false,curveSegments:2});
+  const count=hero?24:13;
+  for(let i=0;i<count;i++) {
+    const a=i*2.39996,spread=Math.sqrt((i+.5)/count)*(hero?.85:.62);
+    const xx=Math.cos(a)*spread,zz=Math.sin(a)*spread*.55,yy=1.25+Math.sqrt(Math.max(0,1-spread*spread))*.65+(i%3)*.10;
+    if(i%2===0) {
+      beam(g,[.02,.65,0],[xx*.65,yy-.15,zz*.65],.045,0x806342);
+      beam(g,[xx*.65,yy-.15,zz*.65],[xx,yy+.1,zz],.025,0x94754d);
+    }
+    const plate=add(g,foliage,colors[i%4],xx,yy,zz);
+    plate.rotation.set(-.12+(i%3)*.14,Math.sin(a)*.45,.08*Math.sin(i*2));
+    const size=.75+(i%4)*.12;plate.scale.set(size,size*.87,1);
+    // Smaller overlapping paper lobes catch light without a star-shaped canopy.
+    if(i%3===0) {
+      const lobe=add(g,foliage,colors[(i+1)%4],xx+.14,yy+.12,zz+.055);lobe.scale.set(.42,.36,1);lobe.rotation.y=-.18;
+    }
   }
-  if(!hero)batchStatic(g);
+  batchStatic(g);
   contact(p,x,y,z,1.8*scale,1.3*scale);trees.push(g);
   return g;
 }
@@ -476,6 +477,7 @@ export function createDiorama({parent,autumn,trees,wheels,trains,leaves,clickabl
   randomSeed=1986;
   const world=group(parent,0,.39,0);
   land(world,autumn);water(world,autumn,leaves);mountains(world);
+  createValleyDetails(world,autumn,riverCenter,riverHalfWidth);
   railwayModel(world);bridge(world,.62);bridge(world,-3.63,true);
   polygon(world,[[-5.7,.2],[-2.4,.2],[-2.4,1.7],[-3,2.23],[-5.7,2.23]],.64,.73,0xb9ac8e,true);
   station(world,autumn,stationTemplate);
@@ -484,7 +486,7 @@ export function createDiorama({parent,autumn,trees,wheels,trains,leaves,clickabl
   house(world,3.4,1.84,-2.8,.72,0xe2d6b7);
   house(world,-4.4,1.84,-2.7,.73,0xdac59c);
   house(world,-6.05,1.84,-3.4,.68,0xd7c7a8);
-  house(world,4.5,.68,3.25,.70,0xd4c39a);
+  house(world,6.15,.68,2.1,.66,0xd4c39a);
   watermill(world,wheels);
   for(let i=0;i<22;i++) {
     const side=i%2?1:-1,x=side*(2.4+random()*4.3),z=-3.9+random()*1.25;
@@ -493,16 +495,17 @@ export function createDiorama({parent,autumn,trees,wheels,trains,leaves,clickabl
   }
   for(const [x,y,z,s,cherry] of [
     [-6.2,.67,3.0,.85,true],[-5.5,.67,3.1,.64,false],[-2.3,.67,2.3,.78,true],
-    [5.7,.67,3.7,.94,true],[6.3,1.15,.6,.73,false],[3.5,1.15,-.6,.64,false],
+    [6.5,.67,3.25,.60,true],[6.3,1.15,.6,.73,false],[3.5,1.15,-.6,.64,false],
     [-6.3,1.41,.0,.72,false],[2.2,1.15,-1.4,.7,true],[-2.7,1.41,-1.4,.57,false],
   ])tree(world,x,y,z,s,autumn,trees,false,cherry&&!autumn);
-  const hero=tree(world,-3.5,.68,3.35,autumn?1.70:.38,autumn,trees,true);
-  hero.userData.hero=true;hero.userData.base=autumn?1.7:.38;
+  const hero=tree(world,5.05,.68,3.15,autumn?1.22:.32,autumn,trees,true);
+  hero.userData.hero=true;hero.userData.base=autumn?1.22:.32;
   hero.traverse(o=>{if(o.isMesh){o.userData.action=autumn?'letter':'water';clickable.push(o)}});
-  bench(world,-4.6,.69,3.6);lantern(world,-2.55,.69,2.7);lantern(world,-5.6,1.43,1.3);lantern(world,3.6,1.15,1.15);
+  bench(world,4.65,.69,4.03);lantern(world,3.83,.69,3.8);lantern(world,-5.6,1.43,1.3);lantern(world,3.6,1.15,1.15);
   gardens(world,autumn);
   person(world,-4.7,1.47,.45);person(world,4.25,1.16,1.0);
-  const personAtTree=person(world,autumn?-4.6:-3.07,autumn?.96:.68,3.5,autumn);
+  const personAtTree=person(world,autumn?4.65:4.4,autumn?.96:.68,autumn?4.03:3.5,autumn);
+  personAtTree.scale.setScalar(1.2);
   personAtTree.userData.dynamic=true;
   if(autumn) {
     // Bent legs and a letter establish the seated reading pose.
@@ -511,7 +514,7 @@ export function createDiorama({parent,autumn,trees,wheels,trains,leaves,clickabl
     beam(personAtTree,[-.075,.30,0],[.02,.29,-.10],.035,0x777676);
     personAtTree.traverse(o=>{if(o.isMesh){o.userData.action='letter';clickable.push(o)}});
     for(let i=0;i<50;i++) {
-      const leaf=add(world,new T.OctahedronGeometry(.045),[0xdca858,0xc8874a,0xe2c078][i%3],-3.5+(random()-.5)*3,.69,3.35+(random()-.5)*2);
+      const leaf=add(world,new T.OctahedronGeometry(.045),[0xdca858,0xc8874a,0xe2c078][i%3],4.9+(random()-.5)*2.2,.69,3.45+(random()-.5)*1.6);
       leaf.scale.y=.1;leaf.rotation.y=random()*6;
     }
   } else {
@@ -521,6 +524,6 @@ export function createDiorama({parent,autumn,trees,wheels,trains,leaves,clickabl
   }
   trainModel(world,autumn,trains,smoke);
   batchStatic(world);
-  world.userData.version='0.3.0';
+  world.userData.version='0.4.0';
   return world;
 }

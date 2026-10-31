@@ -1,15 +1,15 @@
 import * as T from './three.module.js';
 
 // A single print palette and ink weight for the book, Blender asset and scenery.
-const ramp = new T.DataTexture(new Uint8Array([92,172,226,255]),4,1,T.RedFormat);
+const ramp = new T.DataTexture(new Uint8Array([64,139,207,255]),4,1,T.RedFormat);
 ramp.minFilter=ramp.magFilter=T.NearestFilter;ramp.needsUpdate=true;
 const pixels=new Uint8Array(64*64*4);
 for(let i=0;i<4096;i++) {
-  const fibre=243+((i*37^(i>>3)*19)%12);
+  const fibre=250+((i*37^(i>>3)*19)%6);
   pixels.set([fibre,fibre,fibre,255],i*4);
 }
 const grain=new T.DataTexture(pixels,64,64,T.RGBAFormat);
-grain.wrapS=grain.wrapT=T.RepeatWrapping;grain.repeat.set(3,3);grain.needsUpdate=true;
+grain.wrapS=grain.wrapT=T.RepeatWrapping;grain.repeat.set(2,2);grain.needsUpdate=true;
 const cache=new Map();
 export function paper(color) {
   if(!cache.has(color))cache.set(color,new T.MeshToonMaterial({color,map:grain,gradientMap:ramp}));

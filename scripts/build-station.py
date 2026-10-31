@@ -97,6 +97,26 @@ for i,x in enumerate([-1.30,-.65,.65,1.30]):
 # Visible glue tabs reinforce the pop-up construction at the feet of each facade.
 for x in [-1.0,-.35,.35,1.0]:
     cube('Glue_tab',(x,.075,.58),(.19,.018,.16),'ivory',front)
+# Architectural detail is parented to existing joints, never to the static root.
+cube('Chimney_stack',(-.94,1.62,-.10),(.18,.25,.18),'paper',roof_back)
+cube('Chimney_crown',(-.94,1.76,-.10),(.23,.04,.23),'edge',roof_back)
+cube('Chimney_flue',(-.94,1.79,-.10),(.115,.012,.13),'dark',roof_back)
+for y in [1.57,1.64,1.71]:
+    cube('Chimney_mortar',(-.94,y,-.002),(.18,.009,.008),'edge',roof_back,bevel=0)
+cube('Canopy_fascia',(0,.97,-1.31),(3.04,.13,.04),'roof_edge',canopy)
+for x in [-1.2,-.9,-.6,-.3,0,.3,.6,.9,1.2]:
+    cube('Canopy_dentil',(x,.94,-1.31),(.065,.05,.045),'timber',canopy)
+for x in [-.96,.96]:
+    cube('Platform_flower_box',(x,.465,.61),(.35,.12,.15),'timber',front)
+    cube('Flower_box_rim',(x,.525,.61),(.39,.025,.17),'edge',front)
+    for i in range(5):
+        xx=x-.13+i*.065
+        beam('Paper_flower_stem',(xx,.53,.62),(xx,.64+(i%2)*.025,.62),.012,'roof',front)
+        cube('Paper_flower',(xx,.65+(i%2)*.025,.62),(.045,.04,.025),'ivory' if i%2 else 'gold',front)
+for x in [-1.31,1.31]:
+    cube('Facade_corner_trim',(x,.65,.545),(.055,1.18,.055),'ivory',front)
+cube('Entry_lintel',(0,.91,.56),(.57,.045,.055),'ivory',front)
+cube('Entry_step',(0,.065,.67),(.62,.055,.25),'edge',front)
 # Keep a clean, editable Blender source with named hinge empties.
 ROOT.joinpath('assets-source').mkdir(exist_ok=True); ROOT.joinpath('dist/assets').mkdir(exist_ok=True)
 bpy.ops.wm.save_as_mainfile(filepath=str(ROOT/'assets-source/station.blend'))

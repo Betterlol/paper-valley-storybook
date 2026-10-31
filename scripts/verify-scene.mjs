@@ -12,6 +12,12 @@ globalThis.document = {
   createElement: () => ({getContext: () => ({fillRect(){}, strokeRect(){}, fillText(){}})}),
 };
 const stationTemplate=await loadStationTemplate(await readFile(new URL('../dist/assets/station.glb',import.meta.url)));
+for(const [name,hinge] of [['Chimney_stack','Hinge_RoofBack'],['Platform_flower_box','Hinge_Front'],['Canopy_fascia','Hinge_Canopy']]) {
+  let object=stationTemplate.getObjectByName(name);
+  assert(object,`${name} survives Blender export`);
+  while(object&&object.name!==hinge)object=object.parent;
+  assert(object,`${name} is attached to its folding joint`);
+}
 const stationColors=new Map();
 stationTemplate.traverse(o=>{if(o.isMesh)stationColors.set(o.material.name,o.material.color.getHex())});
 for(const [name,color] of [['roof',0x537b7b],['timber',0x8a7350],['paper',0xe5cfa3]]) {

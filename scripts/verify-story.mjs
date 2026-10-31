@@ -28,7 +28,13 @@ src+=`
 const assert=(v,m)=>{if(!v)throw Error(m)};
 let tick=0;
 function advance(frames){for(let i=0;i<frames;i++){tick+=40;frame(tick)}}
-water();assert(planted,'planting');turn(1);
+water();assert(planted,'planting');advance(1);
+const heroSpring=trees.find(tree=>tree.userData.hero&&tree.userData.base<1);
+const heroAutumn=trees.find(tree=>tree.userData.hero&&tree.userData.base>=1);
+assert(heroSpring.position.x===heroAutumn.position.x&&heroSpring.position.z===heroAutumn.position.z,'The same tree stays at the same geographic anchor across time');
+assert(droplets.filter(drop=>drop.visible).length>0,'Watering has visible droplets');
+assert(droplets.every(drop=>Math.abs(drop.position.x-heroSpring.position.x)<.3&&Math.abs(drop.position.z-heroSpring.position.z)<.3),'Watering follows the relocated sapling');
+turn(1);
 advance(75);
 assert(flip,'A staged turn is still in progress while the station folds');
 assert(worlds[0].userData.station.userData.fold>.95,'Station closes before leaf rises');
@@ -45,7 +51,17 @@ readLetter();assert(delivered,'letter ending');turn(0);advance(185);
 assert(page===0&&!flip,'reverse turn completes');
 assert(planted,'planting persists');
 assert(!document.querySelector('#water').disabled,'controls restored after turn');
-console.log(JSON.stringify({passed:true,checks:['planting','roof and wall stage','paper ownership','forward unfold','letter ending','reverse unfold','persistent state','restored controls']}));
+for(const [width,height] of [[390,844],[320,1200]]) {
+  globalThis.innerWidth=width;globalThis.innerHeight=height;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();reset();cameraUpdate();camera.updateMatrixWorld(true);
+  assert(scene.fog.near>camera.position.distanceTo(orbit.target)+5,'Adaptive fog keeps the portrait book visible');
+  for(const x of [-7.56,7.56])for(const z of [-5.32,5.32]) {
+    const corner=new T.Vector3(x,-.3,z);book.localToWorld(corner);corner.project(camera);
+    assert(Math.abs(corner.x)<.98,'The complete book fits a portrait phone viewport: corner '+[x,z]+' projects to '+corner.x);
+    assert(corner.z>-1&&corner.z<1,'Distant portrait framing stays inside the camera clipping planes');
+  }
+}
+globalThis.innerWidth=1440;globalThis.innerHeight=900;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();reset();cameraUpdate();
+console.log(JSON.stringify({passed:true,checks:['planting and relocated watering','roof and wall stage','paper ownership','forward unfold','letter ending','reverse unfold','persistent state','restored controls','portrait framing and fog']}));
 `;
 if(process.env.PAPER_VALLEY_EXPORT)src+=`
 ${process.env.PAPER_VALLEY_POSE==='fold'?'turn(1);advance(70);':''}

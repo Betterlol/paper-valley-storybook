@@ -58,3 +58,20 @@ node scripts/verify-story.mjs
 ```
 
 The folding checks verify station height reduction without whole-model vertical scaling, joint hierarchy, page ownership, restored poses, finite transforms, paper arc length, forward/backward turns and preserved story state. Blender CPU rendering is used for offline geometry inspection. It is not a substitute for visual verification of Three.js shading in a WebGL-capable browser.
+
+## v0.4.0 — spring valley visual foundation
+
+The station, bridge and river now share a richer visual baseline: cooler layered mountain silhouettes with snow and printed facets, staggered masonry, clustered flower beds, layered scalloped tree crowns, a deeper blue river channel and curved moving ripples. Warm key lighting, cool fill and quieter paper grain improve separation. The main tree and its watering/letter scene now occupy the right foreground in both seasons, keeping the station visible. Portrait framing, fog distance and clipping range adapt together.
+
+`dist/valley-details.js` owns the new scenery details. Six mountain half-panels fold about their feet, retain page ownership and follow the curved leaf using the correct rotation composition. Gutter geometry is clipped at the actual intersection plane with interpolated UVs and normals. Other background buildings, bridges and terrain still use the staged compression approximation; this remains a partial paper mechanism.
+
+The Blender station adds a low chimney, canopy fascia, window flower boxes and facade trim under the existing 15 joints. Both the editable source and runtime GLB were regenerated with Blender 5.2.2.
+
+```sh
+node scripts/verify-scene.mjs
+node scripts/verify-paper-mechanisms.mjs
+node scripts/verify-story.mjs
+python scripts/verify-station-export.py
+```
+
+Real WebGL browser inspection was performed locally at 1536×1024 and 390×844, including station close-up, spring/autumn views, watering, reading and a forward/backward turn. Fold/turn stills used controlled animation timestamps to inspect intermediate poses. This establishes a reviewed implementation baseline; the concept art's density, material richness and a fully articulated landscape remain future work. See `docs/visual-baseline-2026-10-31.md` for evidence and remaining limits.
